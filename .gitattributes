@@ -1,0 +1,5 @@
+raw/climate_data/daily/climate_data_nepal_district_wise_daily_part_ii.csv filter=lfs diff=lfs merge=lfs -text
+raw/climate_data/daily/climate_data_nepal_district_wise_daily_part_i.csv filter=lfs diff=lfs merge=lfs -text
+dailyclimate.csv filter=lfs diff=lfs merge=lfs -text
+climate_daily_cleaned.csv filter=lfs diff=lfs merge=lfs -text
+raw/crop_data/district_wise_crop/climate_data.csv filter=lfs diff=lfs merge=lfs -text
