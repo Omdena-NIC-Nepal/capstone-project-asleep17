@@ -5,7 +5,7 @@ from utils.data_loader import load_data
 from utils.feature_engineering import add_climate_zone, create_features, scale_features, apply_pca
 from utils.modeling import classification_model, regression_model
 from utils.visualization import plot_trend, plot_extreme_events, plot_correlation_heatmap,perform_t_test
-
+from utils.nlp import analyze_sentiment
 
 # Load Data
 df = load_data()
@@ -18,6 +18,7 @@ page = st.sidebar.selectbox("Choose a page:", [
     "EDA Dashboard",
     "Feature Engineering",
     "Model Prediction",
+    "Sentiment Analysis"
 ])
 
 # Pages
@@ -88,3 +89,20 @@ elif page == "Model Prediction":
     st.write(f"RMSE: {rmse}")
     st.write(f"MAE: {mae}")
     st.write(f"R2 Score: {r2}")
+elif page == "Sentiment Analysis":
+    st.title("Sentiment Analysis of Climate News")
+
+    # Input for news article
+    text_input = st.text_area("Enter climate-related news article here:")
+
+    if text_input:
+        # Analyze the sentiment
+        sentiment_score, sentiment = analyze_sentiment(text_input)
+
+        # Display the result
+        if sentiment == 'positive':
+            st.success(f"The sentiment is positive with a polarity score of {sentiment_score:.2f}")
+        elif sentiment == 'negative':
+            st.error(f"The sentiment is negative with a polarity score of {sentiment_score:.2f}")
+        else:
+            st.info(f"The sentiment is neutral with a polarity score of {sentiment_score:.2f}")
