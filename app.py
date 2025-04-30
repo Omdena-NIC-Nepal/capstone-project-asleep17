@@ -18,7 +18,9 @@ page = st.sidebar.selectbox("Choose a page:", [
     "EDA Dashboard",
     "Feature Engineering",
     "Model Prediction",
-    "Sentiment Analysis"
+    "Sentiment Analysis",
+    "Topic Modeling",
+    "Text Summarization",
 ])
 
 # Pages
@@ -89,6 +91,52 @@ elif page == "Model Prediction":
     st.write(f"RMSE: {rmse}")
     st.write(f"MAE: {mae}")
     st.write(f"R2 Score: {r2}")
+
+elif page == "Topic Modeling":
+    st.header("Topic Modeling for Climate Articles")
+    
+    # User input: Upload text file or input text
+    uploaded_file = st.file_uploader("Upload Climate Articles (Text file)", type=["txt"])
+    text_input = st.text_area("Or enter your own climate article here:")
+
+    if uploaded_file is not None:
+        # Read the uploaded text file
+        text_data = uploaded_file.read().decode("utf-8").splitlines()
+    elif text_input:
+        text_data = [text_input]
+    else:
+        st.warning("Please upload a file or enter a text.")
+        text_data = []
+
+    if text_data:
+        # Perform topic modeling
+        topics = topic_modeling(text_data)
+        st.write("Identified Topics:")
+        for topic in topics:
+            st.write(topic)
+
+elif page == "Text Summarization":
+    st.header("Summarize Climate Report")
+    
+    # User input: Upload climate report or enter text
+    uploaded_report = st.file_uploader("Upload Climate Report (Text file)", type=["txt"])
+    report_input = st.text_area("Or enter your own climate report here:")
+
+    if uploaded_report is not None:
+        # Read the uploaded report
+        report_text = uploaded_report.read().decode("utf-8")
+    elif report_input:
+        report_text = report_input
+    else:
+        st.warning("Please upload a report or enter your text.")
+        report_text = ""
+
+    if report_text:
+        # Generate summary
+        summary = summarize_text(report_text)
+        st.subheader("Summary:")
+        st.write(summary)
+
 elif page == "Sentiment Analysis":
     st.title("Sentiment Analysis of Climate News")
 
