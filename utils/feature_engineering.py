@@ -19,8 +19,7 @@ def create_features(df):
 
 def scale_features(df):
     scaler = StandardScaler()
-    scaled_features = scaler.fit_transform(df[['Temp_2m', 'Precip', 'Humidity_2m', 'Pressure', 'WindSpeed_10m']])
-    return scaled_features
+    return scaler.fit_transform(df)  # now works for any number of columns
 
 def apply_pca(scaled_features):
     pca = PCA(n_components=2)

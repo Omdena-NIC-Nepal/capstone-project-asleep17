@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-
+import numpy as np
 from utils.data_loader import load_data
 from utils.feature_engineering import add_climate_zone, create_features, scale_features, apply_pca
 from utils.modeling import classification_model, regression_model
@@ -65,16 +65,48 @@ if page == "EDA Dashboard":
 
 elif page == "Feature Engineering":
     st.title("Feature Engineering")
-    
-    df = create_features(df)
-    scaled = scale_features(df)
-    principal_components = apply_pca(scaled)
 
-    st.write("Feature Engineering Done ✅")
+    # Prepare data
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.dropna(subset=['Temp_2m', 'Precip', 'Humidity_2m', 'Pressure', 'WindSpeed_10m'])
+
+    # 1. Create features
+    df_fe = create_features(df.copy())
+    st.subheader("Data After Feature Creation")
+    st.write(df_fe[['Temp_2m', 'Precip', 'Drought_Index', 'Is_Monsoon', 'Temp_Lag1', 'Precip_Lag7']].head())
+
+    # 2. Select features to scale
+    feature_cols = ['Temp_2m', 'Precip', 'Humidity_2m', 'Pressure', 'WindSpeed_10m',
+                    'Drought_Index', 'Temp_Lag1', 'Precip_Lag7']
+
+    df_clean = df_fe[feature_cols].dropna()
+    st.subheader("Selected Features for Scaling")
+    st.write("Shape after dropping NaNs:", df_clean.shape)
+    st.write(df_clean.head())
+
+    if df_clean.empty:
+        st.warning("⚠️ Feature engineered DataFrame is empty after dropping NaNs.")
+    else:
+        # 3. Scale features
+        scaled = scale_features(df_clean)
+        scaled_df = pd.DataFrame(scaled, columns=feature_cols)
+        st.subheader("Scaled Features")
+        st.write(scaled_df.head())
+
+        # 4. PCA
+        pca_result = apply_pca(scaled)
+        pca_df = pd.DataFrame(pca_result, columns=["PC1", "PC2"])
+        st.subheader("PCA Result")
+        st.write(pca_df.head())
+
+        st.success("✅ Feature Engineering Complete")
+
+
 
 elif page == "Model Prediction":
     st.title("Modeling")
 
+    # Classification
     X_class = df[['Temp_2m', 'Precip', 'Humidity_2m']]
     y_class = df['Climate_Zone']
 
@@ -83,8 +115,11 @@ elif page == "Model Prediction":
     st.write(f"F1 Score: {f1}")
     st.text(report)
 
+    # Regression: Predicting next day's precipitation
+    df['Precip_tomorrow'] = df['Precip'].shift(-1)
+    df = df.dropna()
     X_reg = df[['Temp_2m', 'Precip', 'Humidity_2m']]
-    y_reg = df['Precip']
+    y_reg = df['Precip_tomorrow']
 
     reg, rmse, mae, r2 = regression_model(X_reg, y_reg)
     st.subheader("Regression Results")
