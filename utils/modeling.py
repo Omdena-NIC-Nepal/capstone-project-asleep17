@@ -16,7 +16,9 @@ def regression_model(X, y):
     reg = GradientBoostingRegressor(n_estimators=100)
     reg.fit(X_train, y_train)
     y_pred = reg.predict(X_test)
-    rmse = mean_squared_error(y_test, y_pred, squared=False)
+    mse = mean_squared_error(y_test, y_pred)
+  
+    rmse = np.sqrt(mse)
     mae = mean_absolute_error(y_test, y_pred)
     r2 = reg.score(X_test, y_test)
     return reg, rmse, mae, r2
