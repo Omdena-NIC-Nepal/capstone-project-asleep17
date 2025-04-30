@@ -1,7 +1,7 @@
 import pandas as pd
+import pandas as pd
 import gdown
-import requests
-import zipfile
+import os
 
 # Function to download file from Google Drive using the file ID
 def download_file_from_google_drive(file_id, output="climate_daily_cleaned.csv"):
@@ -9,16 +9,23 @@ def download_file_from_google_drive(file_id, output="climate_daily_cleaned.csv")
 
 # Function to load data from a given file path
 def load_data(file_path="climate_daily_cleaned.csv"):
+    print(f"Checking if file {file_path} exists...")
+    
+    if not os.path.exists(file_path):
+        print(f"File {file_path} not found locally. Downloading from Google Drive...")
+        file_id = '1kn4n6fezdE_JzuQxdXmfAdcApeTOMKR0'  # Replace with your file's ID
+        download_file_from_google_drive(file_id, file_path)  # Download the file
+        print(f"File downloaded: {file_path}")
+    
     try:
         df = pd.read_csv(file_path)
         return df
-    except FileNotFoundError:
-        print(f"File {file_path} not found locally. Downloading from Google Drive...")
-        # File ID from Google Drive link
-        file_id = '1kn4n6fezdE_JzuQxdXmfAdcApeTOMKR0'  # Replace with your file's ID
-        download_file_from_google_drive(file_id)
-        df = pd.read_csv(file_path)
-        return df
+    except Exception as e:
+        print(f"Error loading file: {e}")
+        return None
+
+# Sample usage
+
 
 
 def classify_climate(row):
@@ -33,10 +40,11 @@ def classify_climate(row):
         return 'Cold'
     else:
         return 'Other'  # This can be used to classify regions that don't fall into the standard categories
-
-df = load_data("climate_daily_cleaned.csv")
+df = load_data()
 
 if df is not None:
-    # Classify all climate types in the DataFrame
-    df['Climate_Type'] = df.apply(classify_climate, axis=1)
     print(df.head())
+else:
+    print("Failed to load data.")
+
+
