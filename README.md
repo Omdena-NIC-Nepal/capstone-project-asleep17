@@ -54,7 +54,7 @@ Copy
 Edit
 streamlit run app.py
 The app will open in your default web browser.
-
+### web app link:https://capstone-project-asleep17-ts3o5st9ds3wzpgwkmqbi6.streamlit.app/
 Usage
 EDA Dashboard: Select the "EDA Dashboard" from the sidebar to view the visualizations.
 
