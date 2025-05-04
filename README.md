@@ -3,13 +3,14 @@
 markdown
 Copy
 Edit
-### web app link:https://capstone-project-asleep17-ts3o5st9ds3wzpgwkmqbi6.streamlit.app/
+### web app link:https://capstone-project-asleep17-8qyxut96qzerhvfyk3wsg9.streamlit.app/
 ## Features
 
 1. **EDA Dashboard**: 
    - Visualize the trends of temperature and precipitation over time.
    - Generate a correlation heatmap of various climate variables.
    - Conduct statistical tests to determine significant temperature changes between different time periods.
+   -Visualize the trend of use of fertilizer over time
 
 2. **Feature Engineering**: 
    - Create new features like drought index, monsoon period, lag features, etc.
