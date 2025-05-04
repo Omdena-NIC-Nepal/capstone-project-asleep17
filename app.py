@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt 
+import matplotlib.ticker as ticker
+import matplotlib.ticker as mtick
 from utils.data_loader import load_data
 from utils.feature_engineering import add_climate_zone, create_features, scale_features, apply_pca
 from utils.modeling import classification_model, regression_model
 from utils.visualization import plot_trend, plot_extreme_events, plot_correlation_heatmap,perform_t_test
-from utils.nlp import analyze_sentiment
+from utils.nlp import analyze_sentiment, topic_modeling, summarize_text
+
 
 # Load Data
 df = load_data()
@@ -25,43 +29,93 @@ page = st.sidebar.selectbox("Choose a page:", [
 
 # Pages
 if page == "EDA Dashboard":
-    st.title("Climate Data EDA Dashboard")
+      dataset_option = st.selectbox("Choose Dataset", ["Climate Data", "Agricultural Data"])
+
+      if dataset_option == "Climate Data":
+        st.title("Climate Data EDA Dashboard")
+        st.header("Data Preview")
+        st.write(df.head())
+
+        st.header("Data Preview")
+        st.write(df.head())
+
+        st.header("Temperature Trend")
+        df['Year'] = df['Date'].dt.year
+        df['Decade'] = (df['Year'] // 10) * 10
+        decade_avg = df.groupby('Decade')[['Temp_2m', 'Precip']].mean().reset_index()
+
+        fig = plot_trend(decade_avg, 'Decade', 'Temp_2m', "Average Temperature per Decade")
+        st.pyplot(fig)
+
+        fig = plot_trend(decade_avg, 'Decade', 'Precip', "Average Precipitation per Decade")
+        st.pyplot(fig)
+
+        st.header("Correlation Heatmap")
+        fig = plot_correlation_heatmap(df, ['Temp_2m', 'Precip', 'Humidity_2m', 'Pressure', 'WindSpeed_10m'])
+        st.pyplot(fig)
+
+        # Statistical Test for Temperature Changes
+        st.header("Statistical Test for Temperature Changes")
+        period1_start = st.date_input("Start Date for Period 1", value=pd.to_datetime("1980-01-01"))
+        period1_end = st.date_input("End Date for Period 1", value=pd.to_datetime("1999-12-31"))
+        period2_start = st.date_input("Start Date for Period 2", value=pd.to_datetime("2000-01-01"))
+        period2_end = st.date_input("End Date for Period 2", value=pd.to_datetime("2020-12-31"))
+
+        # Call the function from visualization.py
+        t_stat, p_val = perform_t_test(df, 'Date', 'Temp_2m', period1_start, period1_end, period2_start, period2_end)
+
+        st.write(f"T-statistic: {t_stat}")
+        st.write(f"P-value: {p_val}")
+
+        if p_val < 0.05:
+         st.success("There is a significant change in temperature between the two periods.")
+        else:
+         st.info("No significant change in temperature between the two periods.")
+
     
-    st.header("Data Preview")
-    st.write(df.head())
+      elif dataset_option == "Agricultural Data":
+        st.title("Agricultural Data EDA Dashboard")
+        
+        # Load the agricultural data (CSV file)
+        df_agriculture = pd.read_csv("agriculture-and-rural-development_npl.csv")  # Path to your agricultural data
+        df_agriculture = df_agriculture.drop(0, axis=0)  # Drop header row if necessary
 
-    st.header("Temperature Trend")
-    df['Year'] = df['Date'].dt.year
-    df['Decade'] = (df['Year'] // 10) * 10
-    decade_avg = df.groupby('Decade')[['Temp_2m', 'Precip']].mean().reset_index()
-    
-    fig = plot_trend(decade_avg, 'Decade', 'Temp_2m', "Average Temperature per Decade")
-    st.pyplot(fig)
+        # Ensure 'Year' is treated as integer for plotting
+        df_agriculture['Year'] = df_agriculture['Year'].astype(int)
 
-    fig = plot_trend(decade_avg, 'Decade', 'Precip', "Average Precipitation per Decade")
-    st.pyplot(fig)
+        # Data Preview
+        st.header("Data Preview")
+        st.write(df_agriculture.head())
 
-    st.header("Correlation Heatmap")
-    fig = plot_correlation_heatmap(df, ['Temp_2m', 'Precip', 'Humidity_2m', 'Pressure', 'WindSpeed_10m'])
-    st.pyplot(fig)
-    
-     # Statistical Test for Temperature Changes
-    st.header("Statistical Test for Temperature Changes")
-    period1_start = st.date_input("Start Date for Period 1", value=pd.to_datetime("1980-01-01"))
-    period1_end = st.date_input("End Date for Period 1", value=pd.to_datetime("1999-12-31"))
-    period2_start = st.date_input("Start Date for Period 2", value=pd.to_datetime("2000-01-01"))
-    period2_end = st.date_input("End Date for Period 2", value=pd.to_datetime("2020-12-31"))
+        # Check for missing values
+        st.header("Missing Data")
+        st.write(df_agriculture.isnull().sum())
 
-    # Call the function from visualization.py
-    t_stat, p_val = perform_t_test(df, 'Date', 'Temp_2m', period1_start, period1_end, period2_start, period2_end)
+        # Basic statistics
+        st.header("Basic Statistics")
+        st.write(df_agriculture.describe())
 
-    st.write(f"T-statistic: {t_stat}")
-    st.write(f"P-value: {p_val}")
+        # Filter for the two indicators
+        kg_per_hectare = df_agriculture[df_agriculture["Indicator Name"] == "Fertilizer consumption (kilograms per hectare of arable land)"]
+        percent_production = df_agriculture[df_agriculture["Indicator Name"] == "Fertilizer consumption (% of fertilizer production)"]
 
-    if p_val < 0.05:
-        st.success("There is a significant change in temperature between the two periods.")
-    else:
-        st.info("No significant change in temperature between the two periods.")
+        # Plotting
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(kg_per_hectare["Year"], kg_per_hectare["Value"], marker='o', label='kg/hectare of arable land')
+        ax.plot(percent_production["Year"], percent_production["Value"], marker='x', label='% of fertilizer production')
+
+        ax.set_title("Fertilizer Consumption in Nepal Over the Years")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Value")
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=6))  # Fewer ticks
+        ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('{x:,.0f}'))  # Comma format, no decimal
+
+        ax.legend()
+        ax.grid(True)
+        st.pyplot(fig)
+
+
+
 
 elif page == "Feature Engineering":
     st.title("Feature Engineering")
